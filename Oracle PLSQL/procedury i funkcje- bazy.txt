@@ -1,0 +1,171 @@
+﻿
+--wywołanie:
+
+select * from table(uczestnicy_wycieczki(1));
+select * from table(REZERWACJE_OSOBY(3));
+
+-----  PROCEDURY I FUNKCJE  -----
+--to jest definicja typu jednego rekordu--
+create or replace type rezerwacja as object (
+  ID_WYCIECZKI INT,
+  NAZWA VARCHAR2(100),
+  KRAJ VARCHAR2(50),
+  DATA  DATE,
+  ID_OSOBY INT,
+  IMIE VARCHAR2(50),
+  NAZWISKO  VARCHAR2(50),
+  STATUS CHAR
+);
+--def typu tabeli takich rekordów jak powyżej--
+CREATE OR REPLACE TYPE tabela_rezerwacji AS TABLE OF rezerwacja;
+
+--uczestnicy wycieczki-- wersja Łukasza Nawojowskiego
+create or replace function uczestnicy_wycieczki
+  (wycieczka_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_WYCIECZKI = wycieczka_id;
+    tmp cur_wycieczki_osoby%ROWTYPE;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+
+    LOOP
+       FETCH cur_wycieczki_osoby INTO tmp;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      rekord.ID_WYCIECZKI := tmp.ID_WYCIECZKI;
+      rekord.KRAJ := tmp.KRAJ;
+      rekord.DATA := tmp.DATA;
+      rekord.NAZWA := tmp.NAZWA;
+      rekord.ID_OSOBY := tmp.ID_OSOBY;
+      rekord.IMIE := tmp.IMIE;
+      rekord.NAZWISKO := tmp.NAZWISKO;
+      rekord.STATUS := tmp.STATUS;
+      PIPE ROW (rekord);
+
+END LOOP;
+    close cur_wycieczki_osoby;
+  END;
+
+--wersja analogiczna do powyższej funkcji---
+  create or replace function rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    tmp cur_wycieczki_osoby%ROWTYPE;
+BEGIN
+    OPEN cur_wycieczki_osoby;
+
+    LOOP
+       FETCH cur_wycieczki_osoby INTO tmp;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      rekord.ID_WYCIECZKI := tmp.ID_WYCIECZKI;
+      rekord.KRAJ := tmp.KRAJ;
+      rekord.DATA := tmp.DATA;
+      rekord.NAZWA := tmp.NAZWA;
+      rekord.ID_OSOBY := tmp.ID_OSOBY;
+      rekord.IMIE := tmp.IMIE;
+      rekord.NAZWISKO := tmp.NAZWISKO;
+      rekord.STATUS := tmp.STATUS;
+      PIPE ROW (rekord);
+
+END LOOP;
+    close cur_wycieczki_osoby;
+  end;
+
+
+
+
+
+--rezerwacje_osoby wersja moja--- (trochę krócej, bo nie trzeba zmiennej tymczasowej tmp)
+create or replace function rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+begin
+    FOR i in cur_wycieczki_osoby LOOP
+      rekord.ID_WYCIECZKI := i.ID_WYCIECZKI;
+      rekord.KRAJ := i.KRAJ;
+      rekord.DATA := i.DATA;
+      rekord.NAZWA := i.NAZWA;
+      rekord.ID_OSOBY := i.ID_OSOBY;
+      rekord.IMIE := i.IMIE;
+      rekord.NAZWISKO := i.NAZWISKO;
+      rekord.STATUS := i.STATUS;
+      PIPE ROW (rekord);
+    END LOOP;
+  end;
+
+--moja wersja 2
+----   najlepsza opcja   -----
+CREATE OR REPLACE FUNCTION rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    RETURN tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      SELECT * FROM wycieczki_osoby w
+      WHERE w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+    LOOP
+      FETCH cur_wycieczki_osoby INTO
+        rekord.ID_WYCIECZKI, rekord.NAZWA, rekord.KRAJ,rekord.DATA, rekord.ID_OSOBY,
+        rekord.IMIE, rekord.NAZWISKO, rekord.STATUS;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+
+
+
+
+--bardzo wkurzające jest to, że nie da się po ludzku przypisać rekord = i tylko po jednym,
+--jest jakiś sposób z bulk collect into, to wpisuje od razu całą tabelę, 
+--a nie po jednym rekordzie
+--ale cały czas mi się coś nie zgadza w typach, 
+--nie pasuje coś, jakby Ci się chciało to możesz pokombinować, ja już nie mogę, 
+--bo już tyle czasu próbowałam, że już nie mam nerwów, 
+--ale Ty z nowymi siłami może coś wymyślisz
+--mam tyle:
+
+create or replace function rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_OSOBY = osoba_id;
+    --tmp cur_wycieczki_osoby%ROWTYPE;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    type r is table of cur_wycieczki_osoby%ROWTYPE;
+    r_obiekt r;
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+       FETCH cur_wycieczki_osoby bulk collect into r_obiekt limit 100;
+      --EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+    for indx in 1 .. r_obiekt.COUNT
+    loop
+      PIPE ROW (r_obiekt(indx));
+    END LOOP;
+    close cur_wycieczki_osoby;
+  END;
+
+ 
+
+
+

@@ -1,0 +1,489 @@
+﻿
+-----  WIDOKI  -----
+
+CREATE OR REPLACE VIEW wycieczki_osoby
+  AS
+    SELECT
+       w.ID_WYCIECZKI,
+       w.NAZWA,
+       w.KRAJ,
+       w.DATA,
+       o.ID_OSOBY,
+       o.IMIE,
+       o.NAZWISKO,
+       r.STATUS
+    FROM WYCIECZKI w
+      JOIN REZERWACJE r ON w.ID_WYCIECZKI = r.ID_WYCIECZKI
+      JOIN OSOBY o ON r.ID_OSOBY = o.ID_OSOBY;
+
+
+CREATE OR REPLACE VIEW wycieczki_osoby_potwierdzone
+  AS
+   SELECT
+     w.ID_WYCIECZKI,
+     NAZWA,
+     KRAJ,
+     DATA,
+     w.IMIE,
+     w.NAZWISKO,
+     w.STATUS
+   FROM wycieczki_osoby w
+  WHERE w.STATUS = 'P';
+
+
+CREATE OR REPLACE VIEW wycieczki_przyszle
+  AS
+    SELECT
+           w.ID_WYCIECZKI,
+           NAZWA,
+           KRAJ,
+           DATA,
+           w.IMIE,
+           w.NAZWISKO,
+           w.STATUS
+    FROM wycieczki_osoby w
+  WHERE DATA > CURRENT_DATE;
+
+
+CREATE OR REPLACE VIEW wycieczki_miejsca
+  AS
+  SELECT
+    w.ID_WYCIECZKI,
+    w.KRAJ,
+    w.DATA,
+    w.NAZWA,
+    w.LICZBA_MIEJSC,
+    w.LICZBA_MIEJSC - NVL(r.LICZBA_REZERWACJI,0) AS "LICZBA_WOLNYCH_MIEJSC"
+  FROM wycieczki w
+    LEFT OUTER JOIN
+      (SELECT
+         w.ID_WYCIECZKI,
+         count (r.ID_WYCIECZKI) AS "LICZBA_REZERWACJI"
+      FROM wycieczki w
+        LEFT OUTER JOIN REZERWACJE r
+          ON r.ID_WYCIECZKI = w.ID_WYCIECZKI
+        WHERE r.STATUS != 'A'
+      GROUP BY w.ID_WYCIECZKI, w.LICZBA_MIEJSC) r
+    ON r.ID_WYCIECZKI = w.ID_WYCIECZKI;
+
+--widok zwraca tylko te wycieczki, na które są jeszcze miejsca i jeszcze się nie odbyły
+CREATE OR REPLACE VIEW dostępne_wycieczki AS
+  SELECT * FROM wycieczki_miejsca w
+  WHERE w.LICZBA_WOLNYCH_MIEJSC > 0 and w.DATA > CURRENT_DATE;
+
+
+CREATE OR REPLACE  VIEW rezerwacje_do_anulowania AS
+  SELECT r.NR_REZERWACJI, r.ID_WYCIECZKI, r.ID_OSOBY, r.STATUS
+  FROM REZERWACJE r
+  JOIN WYCIECZKI w ON w.ID_WYCIECZKI = r.ID_WYCIECZKI
+  WHERE r.STATUS = 'N' AND CURRENT_DATE > w.DATA - 7;
+
+
+declare l_date DATE;
+begin
+   l_date := SYSDATE + 5;
+  DBMS_OUTPUT.put_line ( l_date);
+  DBMS_OUTPUT.put_line ( SYSDATE);
+  DBMS_OUTPUT.put_line ('cok');
+end;
+
+-----  PROCEDURY I FUNKCJE  -----
+create or replace type rezerwacja as object (
+  ID_WYCIECZKI INT,
+  NAZWA VARCHAR2(100),
+  KRAJ VARCHAR2(50),
+  DATA  DATE,
+  ID_OSOBY INT,
+  IMIE VARCHAR2(50),
+  NAZWISKO  VARCHAR2(50),
+  STATUS CHAR
+);
+CREATE OR REPLACE TYPE tabela_rezerwacji AS TABLE OF rezerwacja;
+
+create or replace function uczestnicy_wycieczki
+  (wycieczka_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_WYCIECZKI = wycieczka_id;
+    tmp cur_wycieczki_osoby%ROWTYPE;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+
+    LOOP
+       FETCH cur_wycieczki_osoby INTO tmp;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      rekord.ID_WYCIECZKI := tmp.ID_WYCIECZKI;
+      rekord.KRAJ := tmp.KRAJ;
+      rekord.DATA := tmp.DATA;
+      rekord.NAZWA := tmp.NAZWA;
+      rekord.ID_OSOBY := tmp.ID_OSOBY;
+      rekord.IMIE := tmp.IMIE;
+      rekord.NAZWISKO := tmp.NAZWISKO;
+      rekord.STATUS := tmp.STATUS;
+      PIPE ROW (rekord);
+
+END LOOP;
+    close cur_wycieczki_osoby;
+  END;
+
+
+
+
+---to nie dziala
+create or replace function rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_OSOBY = osoba_id;
+    --tmp cur_wycieczki_osoby%ROWTYPE;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    type r is table of cur_wycieczki_osoby%ROWTYPE;
+    r_obiekt r;
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+       FETCH cur_wycieczki_osoby bulk collect into r_obiekt limit 100;
+      --EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+    for indx in 1 .. r_obiekt.COUNT
+    loop
+      PIPE ROW (r_obiekt(indx));
+    END LOOP;
+    close cur_wycieczki_osoby;
+  END;
+
+---wersja bez tmp, dziala
+create or replace function rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+begin
+    FOR i in cur_wycieczki_osoby LOOP
+      rekord.ID_WYCIECZKI := i.ID_WYCIECZKI;
+      rekord.KRAJ := i.KRAJ;
+      rekord.DATA := i.DATA;
+      rekord.NAZWA := i.NAZWA;
+      rekord.ID_OSOBY := i.ID_OSOBY;
+      rekord.IMIE := i.IMIE;
+      rekord.NAZWISKO := i.NAZWISKO;
+      rekord.STATUS := i.STATUS;
+      PIPE ROW (rekord);
+    END LOOP;
+  end;
+
+
+--dziala wersja z tmp
+  create or replace function rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    tmp cur_wycieczki_osoby%ROWTYPE;
+BEGIN
+    OPEN cur_wycieczki_osoby;
+
+    LOOP
+       FETCH cur_wycieczki_osoby INTO tmp;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      rekord.ID_WYCIECZKI := tmp.ID_WYCIECZKI;
+      rekord.KRAJ := tmp.KRAJ;
+      rekord.DATA := tmp.DATA;
+      rekord.NAZWA := tmp.NAZWA;
+      rekord.ID_OSOBY := tmp.ID_OSOBY;
+      rekord.IMIE := tmp.IMIE;
+      rekord.NAZWISKO := tmp.NAZWISKO;
+      rekord.STATUS := tmp.STATUS;
+      PIPE ROW (rekord);
+
+END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+----   najlepsza opcja   -----
+CREATE OR REPLACE FUNCTION rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    RETURN tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      SELECT * FROM wycieczki_osoby w
+      WHERE w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+    LOOP
+      FETCH cur_wycieczki_osoby INTO
+        rekord.ID_WYCIECZKI, rekord.NAZWA, rekord.KRAJ,rekord.DATA, rekord.ID_OSOBY,
+        rekord.IMIE, rekord.NAZWISKO, rekord.STATUS;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+CREATE OR REPLACE FUNCTION przyszle_rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    RETURN tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      SELECT * FROM wycieczki_osoby w
+      WHERE w.ID_OSOBY = osoba_id and w.DATA > CURRENT_DATE;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  BEGIN
+    OPEN cur_wycieczki_osoby;
+    LOOP
+      FETCH cur_wycieczki_osoby INTO
+        rekord.ID_WYCIECZKI, rekord.NAZWA, rekord.KRAJ,rekord.DATA, rekord.ID_OSOBY,
+        rekord.IMIE, rekord.NAZWISKO, rekord.STATUS;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+  -----
+create or replace type wycieczka as object (
+  ID_WYCIECZKI INT,
+  KRAJ VARCHAR2(50),
+  DATA  DATE,
+  NAZWA VARCHAR2(100),
+  LICZBA_MIEJSC INT,
+  LICZBA_WOLNYCH_MIEJSC INT
+);
+CREATE OR REPLACE TYPE tabela_wycieczek AS TABLE OF wycieczka;
+
+  CREATE OR REPLACE FUNCTION dostępne_wycieczki_f
+  (v_kraj IN dostępne_wycieczki.KRAJ%TYPE, data_od IN dostępne_wycieczki.DATA%TYPE, data_do IN dostępne_wycieczki.DATA%TYPE)
+    RETURN tabela_wycieczek PIPELINED
+  AS
+    CURSOR cur_dostepne_wycieczki is
+      SELECT * FROM dostępne_wycieczki w
+      WHERE w.kraj = v_kraj and w.DATA > data_od and w.DATA < data_do;
+    rekord wycieczka := wycieczka(NULL, NULL, NULL, NULL, NULL, NULL);
+  BEGIN
+    OPEN cur_dostepne_wycieczki;
+    LOOP
+      FETCH cur_dostepne_wycieczki INTO
+        rekord.ID_WYCIECZKI, rekord.KRAJ, rekord.DATA, rekord.NAZWA, rekord.LICZBA_MIEJSC,
+        rekord.LICZBA_WOLNYCH_MIEJSC;
+      EXIT WHEN cur_dostepne_wycieczki%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_dostepne_wycieczki;
+  END;
+
+
+
+
+
+
+-----------------------------------------------------
+
+select * from OSOBY;
+
+select * from WYCIECZKI;
+
+select * from REZERWACJE;
+
+select * from WYCIECZKI_OSOBY;
+
+select * from WYCIECZKI_OSOBY_POTWIERDZONE;
+
+select * from WYCIECZKI_PRZYSZLE;
+
+select * from WYCIECZKI_MIEJSCA;
+
+select * from DOSTĘPNE_WYCIECZKI;
+
+select * from REZERWACJE_DO_ANULOWANIA;
+
+select * from table(uczestnicy_wycieczki(41));
+
+select * from table(REZERWACJE_OSOBY(10));
+
+select * from table(PRZYSZLE_REZERWACJE_OSOBY(10));
+
+select * from table(DOSTĘPNE_WYCIECZKI_F('Polska', '2018-01-01', '2018-09-09'));
+
+
+
+_----------------------------------------------
+
+
+file:///C:/Users/Madzia/Downloads/ora-widoki-procedury-trigery-cw.pdf
+
+-------------------
+
+
+
+--TABLES
+CREATE TABLE OSOBY
+(
+  ID_OSOBY INT GENERATED ALWAYS AS IDENTITY NOT NULL  ,
+  IMIE VARCHAR2(50)  ,
+  NAZWISKO VARCHAR2(50)  ,
+  PESEL VARCHAR2(11)  ,
+  KONTAKT VARCHAR2(100)  ,
+  CONSTRAINT OSOBY_PK PRIMARY KEY
+    (
+      ID_OSOBY
+    )
+  ENABLE
+);
+
+
+CREATE TABLE WYCIECZKI
+(
+  ID_WYCIECZKI INT GENERATED ALWAYS AS IDENTITY NOT NULL  ,
+  NAZWA VARCHAR2(100)  ,
+  KRAJ VARCHAR2(50)  ,
+  DATA DATE ,
+  OPIS VARCHAR2(200)  ,
+  LICZBA_MIEJSC INT ,
+  CONSTRAINT WYCIECZKI_PK PRIMARY KEY
+    (
+      ID_WYCIECZKI
+    )
+  ENABLE
+);
+
+
+
+CREATE TABLE REZERWACJE
+(
+  NR_REZERWACJI INT GENERATED ALWAYS AS IDENTITY NOT NULL  ,
+  ID_WYCIECZKI INT  ,
+  ID_OSOBY INT  ,
+  STATUS CHAR(1) ,
+  CONSTRAINT REZERWACJE_PK PRIMARY KEY
+    (
+      NR_REZERWACJI
+    )   ENABLE
+);
+
+
+
+ALTER TABLE REZERWACJE
+  ADD CONSTRAINT REZERWACJE_FK1 FOREIGN KEY
+  (
+    ID_OSOBY
+  )
+REFERENCES OSOBY
+  (
+    ID_OSOBY
+  )
+ENABLE;
+
+ALTER TABLE REZERWACJE
+  ADD CONSTRAINT REZERWACJE_FK2 FOREIGN KEY
+  (
+    ID_WYCIECZKI
+  ) REFERENCES WYCIECZKI
+  (
+    ID_WYCIECZKI
+  )
+ENABLE;
+
+ALTER TABLE REZERWACJE
+  ADD CONSTRAINT REZERWACJE_CHK1 CHECK
+(status IN ('N','P','Z','A')) ENABLE;
+
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Adam', 'Kowalski', '87654321', 'tel: 6623');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Jan', 'Nowak', '12345678', 'tel: 2312, dzwonić po 18.00');
+
+INSERT INTO
+  wycieczki (nazwa, kraj, data, opis, liczba_miejsc) VALUES ('Wycieczka do Paryza','Francja','2016-01-01','Ciekawa wycieczka ...',3);
+
+INSERT INTO
+  wycieczki (nazwa, kraj, data, opis, liczba_miejsc) VALUES ('Piękny Kraków','Polska','2017-02-03','Najciekawa wycieczka ...',2);
+
+INSERT INTO
+  wycieczki (nazwa, kraj, data, opis, liczba_miejsc) VALUES ('Wieliczka','Polska','2017-03-03','Zadziwiająca kopalnia ...',2);
+
+INSERT INTO
+  wycieczki (nazwa, kraj, data, opis, liczba_miejsc) VALUES ('Gorce','Polska','2018-06-07','Maciejowa, Stare Wierchy, Turbacz',10);
+
+UPDATE wycieczki set opis = 'Łopień, Modyń, Miejska Góra' WHERE wycieczki.nazwa = 'Beskid Wyspowy';
+
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Magdalena', 'Nowak', '12123896', 'tel: 1234');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Kinga', 'Nowak', '1989843', 'tel: 0987');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Justyna', 'Michalec', '121298376', 'tel: 1247');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Grzegorz', 'Wojtyk', '87923896', 'tel: 4455');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Krzysztof', 'Michalec', '973487896', 'tel: 1263');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Bartosz', 'Kamis', '632434596', 'tel: 7823');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Joanna', 'Ptys', '13245696', 'tel: 2355');
+
+INSERT INTO
+  osoby (imie, nazwisko, pesel, kontakt) VALUES('Marek', 'Jonatowicz', '73433532', 'tel: 9748');
+
+
+INSERT INTO
+  wycieczki (nazwa, kraj, data, opis, liczba_miejsc) VALUES ('Nad morze...','Polska','2018-08-08','Pływanie w morzu ...',3);
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (3,4,'A');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (1,6,'P');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (2,2,'P');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (21,1,'A');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (1,2,'P');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (1,3,'N');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (1,1,'N');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (3,10,'A');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (21,9,'P');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (21,2,'N');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (21,5,'N');
+
+INSERT INTO
+  rezerwacje (id_wycieczki, id_osoby, status)VALUES (41,10,'N');
+
+
+---------------------------

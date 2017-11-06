@@ -1,0 +1,667 @@
+
+-----  WIDOKI  -----
+
+CREATE OR REPLACE VIEW wycieczki_osoby
+  AS
+    SELECT
+       w.ID_WYCIECZKI, w.NAZWA, w.KRAJ, w.DATA, o.ID_OSOBY, o.IMIE, o.NAZWISKO, r.STATUS
+    FROM WYCIECZKI w
+      JOIN REZERWACJE r ON w.ID_WYCIECZKI = r.ID_WYCIECZKI
+      JOIN OSOBY o ON r.ID_OSOBY = o.ID_OSOBY;
+
+
+CREATE OR REPLACE VIEW wycieczki_osoby_potwierdzone
+  AS
+   SELECT
+     w.ID_WYCIECZKI, NAZWA, KRAJ, DATA, w.IMIE, w.NAZWISKO, w.STATUS
+   FROM wycieczki_osoby w
+  WHERE w.STATUS = 'P';
+
+
+CREATE OR REPLACE VIEW wycieczki_przyszle
+  AS
+    SELECT
+           w.ID_WYCIECZKI, NAZWA, KRAJ, DATA, w.IMIE, w.NAZWISKO, w.STATUS
+    FROM wycieczki_osoby w
+  WHERE DATA > CURRENT_DATE;
+
+
+CREATE OR REPLACE VIEW wycieczki_miejsca
+  AS
+  SELECT
+    w.ID_WYCIECZKI, w.KRAJ, w.DATA, w.NAZWA, w.LICZBA_MIEJSC,
+    w.LICZBA_MIEJSC - NVL(r.LICZBA_REZERWACJI,0) AS "LICZBA_WOLNYCH_MIEJSC"
+  FROM wycieczki w
+    LEFT OUTER JOIN
+      (SELECT
+         w.ID_WYCIECZKI,
+         count (r.ID_WYCIECZKI) AS "LICZBA_REZERWACJI"
+      FROM wycieczki w
+        LEFT OUTER JOIN REZERWACJE r
+          ON r.ID_WYCIECZKI = w.ID_WYCIECZKI
+        WHERE r.STATUS != 'A'
+      GROUP BY w.ID_WYCIECZKI, w.LICZBA_MIEJSC) r
+    ON r.ID_WYCIECZKI = w.ID_WYCIECZKI;
+
+--widok zwraca tylko te wycieczki, na które s¹ jeszcze miejsca i jeszcze siê nie odby³y
+CREATE OR REPLACE VIEW dostêpne_wycieczki AS
+  SELECT * FROM wycieczki_miejsca w
+  WHERE w.LICZBA_WOLNYCH_MIEJSC > 0 and w.DATA > CURRENT_DATE;
+
+
+CREATE OR REPLACE  VIEW rezerwacje_do_anulowania AS
+  SELECT r.NR_REZERWACJI, r.ID_WYCIECZKI, r.ID_OSOBY, r.STATUS
+  FROM REZERWACJE r
+  JOIN WYCIECZKI w ON w.ID_WYCIECZKI = r.ID_WYCIECZKI
+  WHERE r.STATUS = 'N' AND CURRENT_DATE > w.DATA - 7;
+
+
+
+-----  PROCEDURY I FUNKCJE  -----
+create or replace type rezerwacja as object (
+  ID_WYCIECZKI INT,
+  NAZWA VARCHAR2(100),
+  KRAJ VARCHAR2(50),
+  DATA  DATE,
+  ID_OSOBY INT,
+  IMIE VARCHAR2(50),
+  NAZWISKO  VARCHAR2(50),
+  STATUS CHAR
+);
+CREATE OR REPLACE TYPE tabela_rezerwacji AS TABLE OF rezerwacja;
+
+
+create or replace function uczestnicy_wycieczki
+  (wycieczka_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    return tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      select * from wycieczki_osoby w
+      where w.ID_WYCIECZKI = wycieczka_id;
+
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  BEGIN
+    czy_istnieje_taka_wycieczka(wycieczka_id);
+    OPEN cur_wycieczki_osoby;
+    LOOP
+      FETCH cur_wycieczki_osoby INTO
+        rekord.ID_WYCIECZKI, rekord.NAZWA, rekord.KRAJ,rekord.DATA, rekord.ID_OSOBY,
+        rekord.IMIE, rekord.NAZWISKO, rekord.STATUS;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+----    -----
+CREATE OR REPLACE FUNCTION rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    RETURN tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      SELECT * FROM wycieczki_osoby w
+      WHERE w.ID_OSOBY = osoba_id;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  BEGIN
+    czy_istnieje_taka_osoba(osoba_id);
+    OPEN cur_wycieczki_osoby;
+    LOOP
+      FETCH cur_wycieczki_osoby INTO
+        rekord.ID_WYCIECZKI, rekord.NAZWA, rekord.KRAJ,rekord.DATA, rekord.ID_OSOBY,
+        rekord.IMIE, rekord.NAZWISKO, rekord.STATUS;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+CREATE OR REPLACE FUNCTION przyszle_rezerwacje_osoby
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+    RETURN tabela_rezerwacji PIPELINED
+  AS
+    CURSOR cur_wycieczki_osoby is
+      SELECT * FROM wycieczki_osoby w
+      WHERE w.ID_OSOBY = osoba_id and w.DATA > CURRENT_DATE;
+    rekord rezerwacja := rezerwacja(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+  BEGIN
+      czy_istnieje_taka_osoba(osoba_id);
+    OPEN cur_wycieczki_osoby;
+    LOOP
+      FETCH cur_wycieczki_osoby INTO
+        rekord.ID_WYCIECZKI, rekord.NAZWA, rekord.KRAJ,rekord.DATA, rekord.ID_OSOBY,
+        rekord.IMIE, rekord.NAZWISKO, rekord.STATUS;
+      EXIT WHEN cur_wycieczki_osoby%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_wycieczki_osoby;
+  END;
+
+CREATE OR REPLACE PROCEDURE czy_istnieje_taka_osoba
+  (osoba_id IN wycieczki_osoby.ID_WYCIECZKI%TYPE)
+  AS
+    v_check osoby.ID_OSOBY%TYPE;
+    NIE_MA_OSOBY_O_TAKIM_ID EXCEPTION;
+
+  BEGIN
+    SELECT COUNT(*)
+      INTO v_check FROM OSOBY
+        WHERE osoby.ID_OSOBY= osoba_id;
+    if(v_check = 0) then RAISE NIE_MA_OSOBY_O_TAKIM_ID;
+    END if;
+    EXCEPTION
+      WHEN NIE_MA_OSOBY_O_TAKIM_ID THEN
+        RAISE_APPLICATION_ERROR(-20001,'Nie ma osoby o podanym ID');
+  END;
+
+CREATE OR REPLACE PROCEDURE czy_istnieje_taka_wycieczka
+  (wycieczka_id IN wycieczki.ID_WYCIECZKI%TYPE)
+  AS
+    v_check WYCIECZKI.ID_WYCIECZKI%TYPE;
+    NIE_MA_WYCIECZKI_O_TAKIM_ID EXCEPTION;
+
+  BEGIN
+    SELECT COUNT(*)
+      INTO v_check FROM WYCIECZKI
+        WHERE WYCIECZKI.ID_WYCIECZKI = wycieczka_id;
+
+    IF(v_check = 0) THEN
+      RAISE NIE_MA_WYCIECZKI_O_TAKIM_ID;
+    END IF;
+    EXCEPTION
+      WHEN NIE_MA_WYCIECZKI_O_TAKIM_ID THEN
+        RAISE_APPLICATION_ERROR(-20002,'Nie ma wycieczki o podanym ID');
+  END;
+
+
+  CREATE OR REPLACE PROCEDURE czy_istnieje_taka_rezerwacja
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE)
+  AS
+    v_check REZERWACJE.NR_REZERWACJI%TYPE;
+    NIE_MA_REZERWACJI_O_TAKIM_ID EXCEPTION;
+
+  BEGIN
+    SELECT COUNT(*)
+      INTO v_check FROM REZERWACJE
+        WHERE REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+
+    IF(v_check = 0) THEN
+      RAISE NIE_MA_REZERWACJI_O_TAKIM_ID;
+    END IF;
+    EXCEPTION
+      WHEN NIE_MA_REZERWACJI_O_TAKIM_ID THEN
+        RAISE_APPLICATION_ERROR(-20005,'Nie ma rezerwacji o podanym ID');
+  END;
+
+  -----
+create or replace type wycieczka as object (
+  ID_WYCIECZKI INT,
+  KRAJ VARCHAR2(50),
+  DATA  DATE,
+  NAZWA VARCHAR2(100),
+  LICZBA_MIEJSC INT,
+  LICZBA_WOLNYCH_MIEJSC INT
+);
+CREATE OR REPLACE TYPE tabela_wycieczek AS TABLE OF wycieczka;
+
+CREATE OR REPLACE FUNCTION dostêpne_wycieczki_f
+  (v_kraj IN dostêpne_wycieczki.KRAJ%TYPE, data_od IN dostêpne_wycieczki.DATA%TYPE, data_do IN dostêpne_wycieczki.DATA%TYPE)
+    RETURN tabela_wycieczek PIPELINED
+  AS
+    CURSOR cur_dostepne_wycieczki is
+      SELECT * FROM dostêpne_wycieczki w
+      WHERE w.kraj = v_kraj and w.DATA > data_od and w.DATA < data_do;
+    rekord wycieczka := wycieczka(NULL, NULL, NULL, NULL, NULL, NULL);
+
+  BEGIN
+    OPEN cur_dostepne_wycieczki;
+    LOOP
+      FETCH cur_dostepne_wycieczki INTO
+        rekord.ID_WYCIECZKI, rekord.KRAJ, rekord.DATA, rekord.NAZWA, rekord.LICZBA_MIEJSC,
+        rekord.LICZBA_WOLNYCH_MIEJSC;
+      EXIT WHEN cur_dostepne_wycieczki%NOTFOUND;
+      PIPE ROW (rekord);
+    END LOOP;
+    CLOSE cur_dostepne_wycieczki;
+  END;
+
+-----pkt. 5----
+
+CREATE OR REPLACE PROCEDURE dodaj_rezerwacje
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, osoba_id IN OSOBY.ID_OSOBY%TYPE)
+  AS
+
+  v_miejsca wycieczki_miejsca.liczba_wolnych_miejsc%TYPE;
+  v_data WYCIECZKI.data%TYPE;
+  v_rez_id REZERWACJE.NR_REZERWACJI%TYPE;
+  WYCIECZKA_SIE_ODBYLA EXCEPTION;
+  NIE_MA_WOLNYCH_MIEJSC EXCEPTION;
+
+  BEGIN
+    czy_istnieje_taka_osoba(osoba_id);
+    czy_istnieje_taka_wycieczka(wycieczka_id);
+
+    SELECT wycieczki_miejsca.LICZBA_WOLNYCH_MIEJSC
+      INTO v_miejsca FROM wycieczki_miejsca
+        WHERE wycieczki_miejsca.ID_WYCIECZKI = wycieczka_id;
+    IF(v_miejsca = 0) THEN
+      RAISE NIE_MA_WOLNYCH_MIEJSC;
+    END IF;
+    SELECT wycieczki.DATA
+      INTO v_data FROM wycieczki
+        WHERE WYCIECZKI.ID_WYCIECZKI = wycieczka_id;
+    IF(v_data < CURRENT_DATE) THEN
+      RAISE WYCIECZKA_SIE_ODBYLA;
+    END IF;
+
+    INSERT INTO
+    rezerwacje (id_wycieczki, id_osoby, status)VALUES (wycieczka_id,osoba_id,'N');
+
+    select REZERWACJE.NR_REZERWACJI into v_rez_id from REZERWACJE
+    where (REZERWACJE.ID_WYCIECZKI =wycieczka_id and REZERWACJE.ID_OSOBY = osoba_id and REZERWACJE.STATUS = 'N');
+
+    INSERT INTO
+    REZERWACJE_LOG (NR_REZERWACJI, DATA, STATUS)VALUES (v_rez_id,CURRENT_DATE,'N');
+    EXCEPTION
+      WHEN NIE_MA_WOLNYCH_MIEJSC THEN
+        RAISE_APPLICATION_ERROR(-20003,'Brak wolnych miejsc');
+      WHEN WYCIECZKA_SIE_ODBYLA THEN
+          RAISE_APPLICATION_ERROR(-20004,'Wycieczka siê ju¿ odby³a');
+  END;
+
+CREATE OR REPLACE PROCEDURE zmien_status_rezerwacji
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE, s IN REZERWACJE.STATUS%TYPE)
+  AS
+    v_status REZERWACJE.STATUS%TYPE;
+    BRAK_ZMIANY EXCEPTION;
+    BYLA_ZAPLACONA EXCEPTION;
+  BEGIN
+   czy_istnieje_taka_rezerwacja(rezerwacja_id);
+  select REZERWACJE.STATUS into v_status FROM REZERWACJE
+      where REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+    if(v_status = s) then
+      RAISE BRAK_ZMIANY;
+    end if;
+    CASE v_status
+      WHEN 'A' then
+      --sprawdz czy mozna nadal, trzeba sprawdzic miejscawolne i date
+      czy_wycieczka_sie_juz_odbyla_i_czy_sa_miejsca(rezerwacja_id);
+      WHEN 'N' THEN
+        if(s = 'P') or (s = 'Z') THEN
+        --czy mozna, nie trzeba sprawdzac miejsc, wystarczy date sprawdzic
+        czy_wycieczka_sie_juz_odbyla(rezerwacja_id);
+        end if;
+      WHEN 'P' THEN
+          if(s = 'Z') then
+            --czy dalej mozna, tylko date
+            czy_wycieczka_sie_juz_odbyla(rezerwacja_id);
+          end if;
+      WHEN 'Z' THEN
+        if(s = 'N') or (s = 'P') THEN
+          RAISE BYLA_ZAPLACONA;
+        end if;
+    end Case;
+    UPDATE REZERWACJE set STATUS = s WHERE REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+    INSERT INTO
+    REZERWACJE_LOG (NR_REZERWACJI, DATA, STATUS)VALUES (rezerwacja_id,CURRENT_DATE,s);
+
+    EXCEPTION
+      WHEN BRAK_ZMIANY THEN
+        RAISE_APPLICATION_ERROR(-20006,'Rezerwacja ma obecnie taki status');
+      WHEN  BYLA_ZAPLACONA THEN
+          RAISE_APPLICATION_ERROR(-20007,'Rezerwacja op³acona');
+  END;
+
+  CREATE OR REPLACE PROCEDURE  czy_wycieczka_sie_juz_odbyla
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE)
+    AS
+    v_date WYCIECZKI.DATA%TYPE;
+    v_wycieczka REZERWACJE.ID_WYCIECZKI%TYPE;
+    BEGIN
+      select REZERWACJE.ID_WYCIECZKI into v_wycieczka from REZERWACJE
+      where  REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+      select WYCIECZKI.DATA into v_date from WYCIECZKI
+        where WYCIECZKI.ID_WYCIECZKI= v_wycieczka;
+      if(v_date< CURRENT_DATE) then
+        RAISE_APPLICATION_ERROR(-20008,'Wycieczka siê ju¿ odby³a');
+      end if;
+    END;
+
+  CREATE OR REPLACE PROCEDURE  czy_wycieczka_sie_juz_odbyla_i_czy_sa_miejsca
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE)
+    AS
+    v_ilosc NUMBER;
+    v_wycieczka REZERWACJE.ID_WYCIECZKI%TYPE;
+    BEGIN
+      czy_wycieczka_sie_juz_odbyla(rezerwacja_id);
+
+      select REZERWACJE.ID_WYCIECZKI into v_wycieczka from REZERWACJE
+      where  REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+
+      select COUNT(*) into v_ilosc from dostêpne_wycieczki
+        where DOSTÊPNE_WYCIECZKI.ID_WYCIECZKI= v_wycieczka;
+
+      if(v_ilosc = 0) then
+        RAISE_APPLICATION_ERROR(-20009,'Brak wolnych miejsc');
+      end if;
+    END;
+
+CREATE OR REPLACE PROCEDURE zmien_liczbe_miejsc
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, nowa_l_miejsc IN WYCIECZKI.LICZBA_MIEJSC%TYPE)
+  AS
+    v_ilosc_rezerwacji NUMBER;
+
+  BEGIN
+    czy_istnieje_taka_wycieczka(wycieczka_id);
+    czy_wycieczka_sie_juz_odbyla(wycieczka_id);
+
+    select count (*) into v_ilosc_rezerwacji from REZERWACJE
+    where REZERWACJE.ID_WYCIECZKI = wycieczka_id;
+
+    if(v_ilosc_rezerwacji > nowa_l_miejsc) THEN
+      RAISE_APPLICATION_ERROR(-20010, 'Nie mo¿na zmniejszyæ iloœci miejsc, poniewa¿ obecnie jest wiêcej rezerwacji');
+    end if;
+    UPDATE WYCIECZKI set LICZBA_MIEJSC = nowa_l_miejsc WHERE WYCIECZKI.ID_WYCIECZKI = wycieczka_id;
+
+  END;
+
+--WIDOKI 2 --- pkt.7
+
+CREATE OR REPLACE VIEW wycieczki_miejsca2
+  AS
+  SELECT
+    w.ID_WYCIECZKI,
+    w.NAZWA,
+    w.KRAJ,
+    w.DATA,
+    w.LICZBA_MIEJSC,
+    w.LICZBA_WOLNYCH_MIEJSC
+  FROM wycieczki w;
+
+--widok zwraca tylko te wycieczki, na które s¹ jeszcze miejsca i jeszcze siê nie odby³y
+CREATE OR REPLACE VIEW dostêpne_wycieczki2
+  AS
+  SELECT * FROM WYCIECZKI w
+  WHERE w.LICZBA_WOLNYCH_MIEJSC > 0 and w.DATA > CURRENT_DATE;
+
+
+--do procedury
+CREATE OR REPLACE VIEW wycieczki_miejsca
+  AS
+  SELECT
+    w.ID_WYCIECZKI, w.KRAJ, w.DATA, w.NAZWA, w.LICZBA_MIEJSC,
+    w.LICZBA_MIEJSC - NVL(r.LICZBA_REZERWACJI,0) AS "LICZBA_WOLNYCH_MIEJSC"
+  FROM wycieczki w
+    LEFT OUTER JOIN
+      (SELECT
+         w.ID_WYCIECZKI, count (r.ID_WYCIECZKI) AS "LICZBA_REZERWACJI"
+      FROM wycieczki w
+        LEFT OUTER JOIN REZERWACJE r
+          ON r.ID_WYCIECZKI = w.ID_WYCIECZKI
+        WHERE r.STATUS != 'A'
+      GROUP BY w.ID_WYCIECZKI, w.LICZBA_MIEJSC) r
+    ON r.ID_WYCIECZKI = w.ID_WYCIECZKI;
+
+CREATE OR REPLACE PROCEDURE przelicz
+  AS
+   CURSOR cur_wycieczki_miejsca is
+      select * from wycieczki_miejsca;
+  BEGIN
+    FOR i in cur_wycieczki_miejsca LOOP
+      UPDATE WYCIECZKI wy set wy.LICZBA_WOLNYCH_MIEJSC = i.LICZBA_WOLNYCH_MIEJSC
+      where wy.ID_WYCIECZKI = i.ID_WYCIECZKI;
+    END LOOP;
+  END;
+
+CREATE PROCEDURE przelicz2
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE)
+  AS
+   v_wycieczka wycieczki_miejsca%ROWTYPE;
+  BEGIN
+    select * into v_wycieczka from wycieczki_miejsca
+      where wycieczki_miejsca.ID_WYCIECZKI = wycieczka_id;
+    UPDATE WYCIECZKI wy set wy.LICZBA_WOLNYCH_MIEJSC = v_wycieczka.LICZBA_WOLNYCH_MIEJSC
+      where wy.ID_WYCIECZKI = v_wycieczka.ID_WYCIECZKI;
+  END;
+
+
+BEGIN
+  przelicz2(1);
+END;
+
+
+
+
+-----  PROCEDURY I FUNKCJE 2  ----- pkt.7
+--prodedury pobieraj¹ce dane
+
+--brak koniecznych zmian, korzystano z widoków, które dynamicznie wyliczaj¹ liczbê wolnych miejsc
+
+--procedury wprowadzaj¹ce dane
+
+
+CREATE OR REPLACE PROCEDURE dodaj_rezerwacje2
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, osoba_id IN OSOBY.ID_OSOBY%TYPE)
+  AS
+
+  BEGIN
+    dodaj_rezerwacje(wycieczka_id,osoba_id);
+    --UPDATE
+      --WYCIECZKI set LICZBA_WOLNYCH_MIEJSC = (LICZBA_WOLNYCH_MIEJSC -1)
+    --where WYCIECZKI.ID_WYCIECZKI = wycieczka_id;
+    przelicz2(wycieczka_id);
+
+  END;
+
+CREATE OR REPLACE PROCEDURE zmien_status_rezerwacji2
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE, s IN REZERWACJE.STATUS%TYPE)
+  AS
+    v_status REZERWACJE.STATUS%TYPE;
+    BRAK_ZMIANY EXCEPTION;
+    BYLA_ZAPLACONA EXCEPTION;
+  BEGIN
+   zmien_status_rezerwacji(rezerwacja_id,s);
+    przelicz();
+
+    EXCEPTION
+      WHEN BRAK_ZMIANY THEN
+        RAISE_APPLICATION_ERROR(-20006,'Rezerwacja ma obecnie taki status');
+      WHEN  BYLA_ZAPLACONA THEN
+          RAISE_APPLICATION_ERROR(-20007,'Rezerwacja op³acona');
+  END;
+
+
+
+
+CREATE OR REPLACE PROCEDURE zmien_liczbe_miejsc2
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, nowa_l_miejsc IN WYCIECZKI.LICZBA_MIEJSC%TYPE)
+  AS
+  BEGIN
+    zmien_liczbe_miejsc(wycieczka_id, nowa_l_miejsc);
+    przelicz2(wycieczka_id);
+    --UPDATE WYCIECZKI set LICZBA_WOLNYCH_MIEJSC = nowa_l_miejsc - v_ilosc_rezerwacji WHERE WYCIECZKI.ID_WYCIECZKI = wycieczka_id;
+  END;
+
+----  TRIGGERY  ----
+
+CREATE OR REPLACE TRIGGER triger_przy_dodawaniu_rezerwacji
+  after insert on REZERWACJE
+  FOR EACH ROW
+  BEGIN
+    INSERT into REZERWACJE_LOG(NR_REZERWACJI, DATA, STATUS) values(:NEW.NR_REZERWACJI,current_date,:NEW.STATUS);
+  END;
+
+---- zmiana struktury procedur modyfikuj¹cych dane  ----
+--usuniêto fragment kodu wpisuj¹cy rekord do tabeli rezewacje_log
+CREATE OR REPLACE PROCEDURE dodaj_rezerwacje3
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, osoba_id IN OSOBY.ID_OSOBY%TYPE)
+  AS
+
+  v_miejsca wycieczki_miejsca.liczba_wolnych_miejsc%TYPE;
+  v_data WYCIECZKI.data%TYPE;
+  v_rez_id REZERWACJE.NR_REZERWACJI%TYPE;
+  WYCIECZKA_SIE_ODBYLA EXCEPTION;
+  NIE_MA_WOLNYCH_MIEJSC EXCEPTION;
+
+  BEGIN
+    czy_istnieje_taka_osoba(osoba_id);
+    czy_istnieje_taka_wycieczka(wycieczka_id);
+
+    SELECT wycieczki_miejsca.LICZBA_WOLNYCH_MIEJSC
+      INTO v_miejsca FROM wycieczki_miejsca
+        WHERE wycieczki_miejsca.ID_WYCIECZKI = wycieczka_id;
+    IF(v_miejsca = 0) THEN
+      RAISE NIE_MA_WOLNYCH_MIEJSC;
+    END IF;
+    SELECT wycieczki.DATA
+      INTO v_data FROM wycieczki
+        WHERE WYCIECZKI.ID_WYCIECZKI = wycieczka_id;
+    IF(v_data < CURRENT_DATE) THEN
+      RAISE WYCIECZKA_SIE_ODBYLA;
+    END IF;
+
+    INSERT INTO
+    REZERWACJE (ID_WYCIECZKI, ID_OSOBY, STATUS)VALUES (WYCIECZKA_ID,OSOBA_ID,'N');
+
+    EXCEPTION
+      WHEN NIE_MA_WOLNYCH_MIEJSC THEN
+        RAISE_APPLICATION_ERROR(-20003,'Brak wolnych miejsc');
+      WHEN WYCIECZKA_SIE_ODBYLA THEN
+          RAISE_APPLICATION_ERROR(-20004,'Wycieczka siê ju¿ odby³a');
+  END;
+
+CREATE OR REPLACE PROCEDURE zmien_status_rezerwacji3
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE, s IN REZERWACJE.STATUS%TYPE)
+  AS
+    v_status REZERWACJE.STATUS%TYPE;
+    BRAK_ZMIANY EXCEPTION;
+    BYLA_ZAPLACONA EXCEPTION;
+  BEGIN
+   czy_istnieje_taka_rezerwacja(rezerwacja_id);
+  select REZERWACJE.STATUS into v_status FROM REZERWACJE
+      where REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+
+    if(v_status = s) then
+      RAISE BRAK_ZMIANY;
+    end if;
+
+    CASE v_status
+      WHEN 'A' then
+      czy_wycieczka_sie_juz_odbyla_i_czy_sa_miejsca(rezerwacja_id);
+      WHEN 'N' THEN
+        if(s = 'P') or (s = 'Z') THEN
+        czy_wycieczka_sie_juz_odbyla(rezerwacja_id);
+        end if;
+      WHEN 'P' THEN
+          if(s = 'Z') then
+            czy_wycieczka_sie_juz_odbyla(rezerwacja_id);
+          end if;
+      WHEN 'Z' THEN
+        if(s = 'N') or (s = 'P') THEN
+          RAISE BYLA_ZAPLACONA;
+        end if;
+    end Case;
+    UPDATE REZERWACJE set STATUS = s WHERE REZERWACJE.NR_REZERWACJI = rezerwacja_id;
+    EXCEPTION
+      WHEN BRAK_ZMIANY THEN
+        RAISE_APPLICATION_ERROR(-20006,'Rezerwacja ma obecnie taki status');
+      WHEN  BYLA_ZAPLACONA THEN
+          RAISE_APPLICATION_ERROR(-20007,'Rezerwacja op³acona');
+  END;
+
+
+CREATE OR REPLACE TRIGGER triger_przy_zmianie_statusu_rezerwacji
+  after update on REZERWACJE
+  FOR EACH ROW
+  BEGIN
+    INSERT into REZERWACJE_LOG(NR_REZERWACJI, DATA, STATUS) values(:OLD.NR_REZERWACJI,current_date,:NEW.STATUS);
+  END;
+
+
+CREATE OR REPLACE TRIGGER triger_zabraniaj¹cy_usuniêcia_rezerwacji
+  before delete on REZERWACJE
+  FOR EACH ROW
+  BEGIN
+      RAISE_APPLICATION_ERROR(-20011,'Nie mo¿na usuwaæ rezerwacji, mo¿esz zmieniæ status na Anulowana');
+    --INSERT into REZERWACJE_LOG(NR_REZERWACJI, DATA, STATUS) values(:OLD.NR_REZERWACJI,current_date,:NEW.STATUS);
+  END;
+
+-------  pkt. 9
+
+CREATE PROCEDURE przelicz3
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE)
+  AS
+   v_wycieczka wycieczki_miejsca%ROWTYPE;
+  BEGIN
+    select * into v_wycieczka from wycieczki_miejsca
+      where wycieczki_miejsca.ID_WYCIECZKI = wycieczka_id;
+    UPDATE WYCIECZKI wy set wy.LICZBA_WOLNYCH_MIEJSC = v_wycieczka.LICZBA_WOLNYCH_MIEJSC
+      where wy.ID_WYCIECZKI = v_wycieczka.ID_WYCIECZKI;
+  END;
+
+
+CREATE OR REPLACE TRIGGER triger_przy_dodawaniu_rezerwacji2
+  before insert on REZERWACJE
+  FOR EACH ROW
+  declare
+    v WYCIECZKI.LICZBA_WOLNYCH_MIEJSC%TYPE;
+  BEGIN
+    select ID_WYCIECZKI into v from WYCIECZKI
+      where WYCIECZKI.ID_WYCIECZKI = :NEW.ID_WYCIECZKI;
+    przelicz3(:NEW.ID_WYCIECZKI);
+
+  END;
+
+CREATE OR REPLACE TRIGGER triger_przy_zmianie_statusu_rezerwacji2
+  after update on REZERWACJE
+  FOR EACH ROW
+  BEGIN
+    przelicz3(:OLD.ID_WYCIECZKI);
+  END;
+---
+drop trigger triger_po_zmianie_liczby_miejsc_dla_wycieczki;
+CREATE OR REPLACE TRIGGER triger_po_zmianie_liczby_miejsc_dla_wycieczki
+  after update on WYCIECZKI
+  FOR EACH ROW
+  DECLARE
+  v_wycieczka wycieczki_miejsca%ROWTYPE;
+
+  BEGIN
+    select * into v_wycieczka from wycieczki_miejsca
+      where wycieczki_miejsca.ID_WYCIECZKI = :OLD.ID_WYCIECZKI;
+     :NEW.LICZBA_WOLNYCH_MIEJSC = v_wycieczka.LICZBA_WOLNYCH_MIEJSC;
+  END;
+
+
+
+BEGIN
+  dodaj_rezerwacje(41,5);
+END;
+
+------  pkt. 9 - zamiana procedur modyfikuj¹cych dane
+CREATE OR REPLACE PROCEDURE dodaj_rezerwacje3
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, osoba_id IN OSOBY.ID_OSOBY%TYPE)
+  AS
+  BEGIN
+    dodaj_rezerwacje(wycieczka_id,osoba_id);
+  END;
+
+CREATE OR REPLACE PROCEDURE zmien_status_rezerwacji3
+  (rezerwacja_id IN REZERWACJE.NR_REZERWACJI%TYPE, s IN REZERWACJE.STATUS%TYPE)
+  AS
+
+  BEGIN
+   zmien_status_rezerwacji(rezerwacja_id,s);
+  END;
+
+
+CREATE OR REPLACE PROCEDURE zmien_liczbe_miejsc3
+  (wycieczka_id IN WYCIECZKI.ID_WYCIECZKI%TYPE, nowa_l_miejsc IN WYCIECZKI.LICZBA_MIEJSC%TYPE)
+  AS
+    v_ilosc_rezerwacji NUMBER;
+
+  BEGIN
+    zmien_liczbe_miejsc(wycieczka_id, nowa_l_miejsc);
+  END;

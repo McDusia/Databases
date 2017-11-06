@@ -1,0 +1,3 @@
+Bazy - poradnik:
+nazwa mojej lokalnej bazy danych:
+"(localdb)\\mssqllocaldb"
