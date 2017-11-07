@@ -10,7 +10,6 @@ namespace ConsoleApplication1.Migrations
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
-            ContextKey = "ConsoleApplication1.ProdContext";
         }
 
         protected override void Seed(ConsoleApplication1.ProdContext context)

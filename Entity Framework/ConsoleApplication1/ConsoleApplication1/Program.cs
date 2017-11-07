@@ -12,7 +12,6 @@ namespace ConsoleApplication1
     class Program
     {
 
-
         static void Main(string[] args)
         {
             using (var db = new ProdContext())
@@ -53,7 +52,10 @@ namespace ConsoleApplication1
                 {
                     Console.WriteLine(item.Name);
                 }
-                
+
+                Console.WriteLine("Products quantity for each category:");
+                CountProductsForCategoryQ(db);
+
                 CategoryForm f = new CategoryForm();
                 f.ShowDialog();
                 Console.WriteLine("Press any key to exit...");
@@ -244,7 +246,7 @@ namespace ConsoleApplication1
 
     public class Product
     {
-        [Key]
+        //[Key]
         public int ProductId { get; set; }
         public string Name { get; set; }
         public int UnitsInStock { get; set; }
@@ -263,11 +265,21 @@ namespace ConsoleApplication1
         //public virtual Category Category { get; set; }
     }
 
+    public class Order
+    {
+        [Key]
+        public int OrderId {get; set; }
+        public string CompanyName { get; set; }
+        public int ProductId { get; set; }
+        public int Quanity { get; set; } 
+    }
+
     public class ProdContext : DbContext
     {
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        //public DbSet<Order> Orders { get; set; }
     }
 
     

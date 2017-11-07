@@ -1,1 +1,2 @@
 C:\Users\Madzia\Documents\STUDIA\C, C++\Projects\ConsoleApplication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.exe.config
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.exe.config

@@ -16,3 +16,22 @@ C:\Users\Madzia\Documents\STUDIA\C, C++\Projects\ConsoleApplication1\ConsoleAppl
 C:\Users\Madzia\Documents\STUDIA\C, C++\Projects\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.ModifyCustomerClass.resources
 C:\Users\Madzia\Documents\STUDIA\C, C++\Projects\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.ModifyProductClass.resources
 C:\Users\Madzia\Documents\STUDIA\C, C++\Projects\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.CategoryForm.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\EntityFramework.dll
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\EntityFramework.SqlServer.dll
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\EntityFramework.xml
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\bin\Debug\EntityFramework.SqlServer.xml
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.csprojResolveAssemblyReference.cache
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.CategoryForm.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.InitialCreate.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.AddDescription.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.AddDescription1.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.AddCustomerClass.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.ModifyCustomerClass.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.ModifyProductClass.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.csproj.GenerateResource.Cache
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.ChangeProducts.resources
