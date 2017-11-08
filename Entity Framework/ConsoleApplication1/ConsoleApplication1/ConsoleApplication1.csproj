@@ -55,80 +55,70 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="frm_Customer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frm_Customer.Designer.cs">
+      <DependentUpon>frm_Customer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frm_Order.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frm_Order.Designer.cs">
+      <DependentUpon>frm_Order.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Methods.cs" />
     <Compile Include="CustomControl1.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="CustomControl1.Designer.cs">
       <DependentUpon>CustomControl1.cs</DependentUpon>
     </Compile>
-    <Compile Include="CategoryForm.cs">
+    <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="CategoryForm.Designer.cs">
-      <DependentUpon>CategoryForm.cs</DependentUpon>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201711052133010_InitialCreate.cs" />
-    <Compile Include="Migrations\201711052133010_InitialCreate.Designer.cs">
-      <DependentUpon>201711052133010_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201711052147119_AddDescription.cs" />
-    <Compile Include="Migrations\201711052147119_AddDescription.Designer.cs">
-      <DependentUpon>201711052147119_AddDescription.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201711052155441_AddDescription1.cs" />
-    <Compile Include="Migrations\201711052155441_AddDescription1.Designer.cs">
-      <DependentUpon>201711052155441_AddDescription1.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201711052158213_AddCustomerClass.cs" />
-    <Compile Include="Migrations\201711052158213_AddCustomerClass.Designer.cs">
-      <DependentUpon>201711052158213_AddCustomerClass.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201711052200190_ModifyCustomerClass.cs" />
-    <Compile Include="Migrations\201711052200190_ModifyCustomerClass.Designer.cs">
-      <DependentUpon>201711052200190_ModifyCustomerClass.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201711052202111_ModifyProductClass.cs" />
-    <Compile Include="Migrations\201711052202111_ModifyProductClass.Designer.cs">
-      <DependentUpon>201711052202111_ModifyProductClass.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201711070800541_ChangeProducts.cs" />
-    <Compile Include="Migrations\201711070800541_ChangeProducts.Designer.cs">
-      <DependentUpon>201711070800541_ChangeProducts.cs</DependentUpon>
+    <Compile Include="Migrations\201711071639251_Initial.cs" />
+    <Compile Include="Migrations\201711071639251_Initial.Designer.cs">
+      <DependentUpon>201711071639251_Initial.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
     <None Include="packages.config" />
     <None Include="Properties\DataSources\Category.datasource" />
+    <None Include="Properties\DataSources\Customer.datasource" />
+    <None Include="Properties\DataSources\Order.datasource" />
     <None Include="Properties\DataSources\Product.datasource" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="CategoryForm.resx">
-      <DependentUpon>CategoryForm.cs</DependentUpon>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711052133010_InitialCreate.resx">
-      <DependentUpon>201711052133010_InitialCreate.cs</DependentUpon>
+    <EmbeddedResource Include="frm_Customer.resx">
+      <DependentUpon>frm_Customer.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711052147119_AddDescription.resx">
-      <DependentUpon>201711052147119_AddDescription.cs</DependentUpon>
+    <EmbeddedResource Include="frm_Order.resx">
+      <DependentUpon>frm_Order.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711052155441_AddDescription1.resx">
-      <DependentUpon>201711052155441_AddDescription1.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201711071639251_Initial.resx">
+      <DependentUpon>201711071639251_Initial.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711052158213_AddCustomerClass.resx">
-      <DependentUpon>201711052158213_AddCustomerClass.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711052200190_ModifyCustomerClass.resx">
-      <DependentUpon>201711052200190_ModifyCustomerClass.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711052202111_ModifyProductClass.resx">
-      <DependentUpon>201711052202111_ModifyProductClass.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201711070800541_ChangeProducts.resx">
-      <DependentUpon>201711070800541_ChangeProducts.cs</DependentUpon>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
