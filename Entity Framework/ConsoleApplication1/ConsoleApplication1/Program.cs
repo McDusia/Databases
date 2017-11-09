@@ -134,6 +134,18 @@ namespace ConsoleApplication1
         public DbSet<Product> Products { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Order> Orders { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        {     //configuration goes here 
+            modelBuilder.Entity<Order>().HasKey(o => o.OrderId);
+            modelBuilder.Entity<Customer>().Property(c => c.Description).HasMaxLength(255);
+            modelBuilder.Entity<Customer>().HasKey(c => c.CompanyName);
+            modelBuilder.Entity<Customer>().Property(c => c.CompanyName).HasMaxLength(255);
+            modelBuilder.Entity<Product>().HasKey(p => p.ProductId);
+            modelBuilder.Entity<Category>().HasKey(c => c.CategoryId);
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
     
 }

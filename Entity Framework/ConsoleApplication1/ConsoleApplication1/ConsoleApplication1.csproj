@@ -102,6 +102,10 @@
     <Compile Include="Migrations\201711081858032_AddDateToOrderClassStatus.Designer.cs">
       <DependentUpon>201711081858032_AddDateToOrderClassStatus.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201711091921529_changedProperties.cs" />
+    <Compile Include="Migrations\201711091921529_changedProperties.Designer.cs">
+      <DependentUpon>201711091921529_changedProperties.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -145,6 +149,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201711081858032_AddDateToOrderClassStatus.resx">
       <DependentUpon>201711081858032_AddDateToOrderClassStatus.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201711091921529_changedProperties.resx">
+      <DependentUpon>201711091921529_changedProperties.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
