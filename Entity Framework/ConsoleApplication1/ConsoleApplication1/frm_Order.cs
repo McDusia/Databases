@@ -16,13 +16,16 @@ namespace ConsoleApplication1
         private Boolean created = false;
         BindingList<Product> products;
         BindingList<Customer> customers;
+        BindingList<Category> categories;
 
-        public frm_Order(BindingList<Product> _products, BindingList<Customer> _customers)
+        public frm_Order(BindingList<Product> _products, BindingList<Customer> _customers, BindingList<Category> _categories)
         {
             InitializeComponent();
             order = new Order();
             products = _products;
             customers = _customers;
+            categories = _categories;
+            
         }
 
         private void frm_Order_Load(object sender, EventArgs e)
@@ -30,21 +33,8 @@ namespace ConsoleApplication1
             orderBindingSource.DataSource = order;
             productBindingSource1.DataSource = products;
             customerBindingSource1.DataSource = customers;
-        }
-
-        private void statusLabel_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void descriptionLabel_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void descriptionTextBox_TextChanged(object sender, EventArgs e)
-        {
-
+            categoryBindingSource.DataSource = categories;
+            //tu jest załadowania 
         }
 
         private void quantityTextBox_TextChanged(object sender, EventArgs e)
@@ -76,6 +66,58 @@ namespace ConsoleApplication1
             order.Product = new Product() { ProductId = ProductId };
             string CompanyName = (string)customerComboBox.SelectedValue;
             order.Customer = new Customer() { CompanyName = CompanyName };
+            order.Date = DateTime.Now;
+            order.Status = "Nowe";
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        /*private void categoryComboBox_SelectedValueChanged(object sender, EventArgs e)
+        {
+            //zmieniło się
+            //int CategoryId = (int)categoryComboBox.SelectedValue;
+            int a = 7;
+        }*/
+
+        private void categoryComboBox_SelectedChangeCommited(object sender, EventArgs e)
+        {
+            
+            int CategoryId = (int)categoryComboBox.SelectedValue;
+            filterProducts(CategoryId);
+            
+        }
+
+        private void filterProducts(int categoryId)
+        {
+
+            //method syntax
+            var p = this.products
+                .Where(product => product.CategoryId == categoryId)
+                .ToList();
+            productBindingSource1.DataSource = p;
+            
+
+            //query
+            //  var query = from p in db.Products
+            //    join c in db.Categories on p.CategoryId equals c.CategoryId
+            //    where c.CategoryId == categoryId
+            //    select p;
+            //List<Product> products = query.ToList<Product>();
+
+        }
+
+
+        private void categoryComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void productComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

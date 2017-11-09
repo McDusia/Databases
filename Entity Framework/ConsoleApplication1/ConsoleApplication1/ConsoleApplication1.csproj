@@ -67,6 +67,12 @@
     <Compile Include="frm_Order.Designer.cs">
       <DependentUpon>frm_Order.cs</DependentUpon>
     </Compile>
+    <Compile Include="frm_OrdersSettings.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frm_OrdersSettings.Designer.cs">
+      <DependentUpon>frm_OrdersSettings.cs</DependentUpon>
+    </Compile>
     <Compile Include="Methods.cs" />
     <Compile Include="CustomControl1.cs">
       <SubType>Component</SubType>
@@ -83,6 +89,18 @@
     <Compile Include="Migrations\201711071639251_Initial.cs" />
     <Compile Include="Migrations\201711071639251_Initial.Designer.cs">
       <DependentUpon>201711071639251_Initial.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201711081842096_AddDateToOrderClass.cs" />
+    <Compile Include="Migrations\201711081842096_AddDateToOrderClass.Designer.cs">
+      <DependentUpon>201711081842096_AddDateToOrderClass.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201711081844357_AddDateToOrderClass2.cs" />
+    <Compile Include="Migrations\201711081844357_AddDateToOrderClass2.Designer.cs">
+      <DependentUpon>201711081844357_AddDateToOrderClass2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201711081858032_AddDateToOrderClassStatus.cs" />
+    <Compile Include="Migrations\201711081858032_AddDateToOrderClassStatus.Designer.cs">
+      <DependentUpon>201711081858032_AddDateToOrderClassStatus.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Program.cs" />
@@ -104,6 +122,9 @@
     <None Include="Properties\DataSources\Product.datasource" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="frm_OrdersSettings.resx">
+      <DependentUpon>frm_OrdersSettings.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -115,6 +136,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201711071639251_Initial.resx">
       <DependentUpon>201711071639251_Initial.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201711081842096_AddDateToOrderClass.resx">
+      <DependentUpon>201711081842096_AddDateToOrderClass.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201711081844357_AddDateToOrderClass2.resx">
+      <DependentUpon>201711081844357_AddDateToOrderClass2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201711081858032_AddDateToOrderClassStatus.resx">
+      <DependentUpon>201711081858032_AddDateToOrderClassStatus.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

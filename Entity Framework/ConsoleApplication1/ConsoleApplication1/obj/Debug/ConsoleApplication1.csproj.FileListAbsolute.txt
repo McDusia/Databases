@@ -14,3 +14,7 @@ C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplicatio
 C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.csproj.GenerateResource.Cache
 C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
 C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.AddDateToOrderClass.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.AddDateToOrderClass2.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.Migrations.AddDateToOrderClassStatus.resources
+C:\Users\Madzia\Desktop\STUDIA\SEMESTR 5\BAZY\Entity Framework\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.frm_OrdersSettings.resources

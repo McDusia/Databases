@@ -41,10 +41,14 @@
             this.productComboBox = new System.Windows.Forms.ComboBox();
             this.customerBindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.customerComboBox = new System.Windows.Forms.ComboBox();
+            this.categoryBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.categoryComboBox = new System.Windows.Forms.ComboBox();
+            this.label4 = new System.Windows.Forms.Label();
             quantityLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.orderBindingSource)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.productBindingSource1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.customerBindingSource1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.categoryBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // quantityLabel
@@ -96,7 +100,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.label1.Location = new System.Drawing.Point(91, 45);
+            this.label1.Location = new System.Drawing.Point(91, 104);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(122, 20);
             this.label1.TabIndex = 7;
@@ -131,11 +135,12 @@
             this.productComboBox.DataSource = this.productBindingSource1;
             this.productComboBox.DisplayMember = "Name";
             this.productComboBox.FormattingEnabled = true;
-            this.productComboBox.Location = new System.Drawing.Point(81, 121);
+            this.productComboBox.Location = new System.Drawing.Point(95, 165);
             this.productComboBox.Name = "productComboBox";
             this.productComboBox.Size = new System.Drawing.Size(300, 28);
             this.productComboBox.TabIndex = 9;
             this.productComboBox.ValueMember = "ProductId";
+            this.productComboBox.SelectedIndexChanged += new System.EventHandler(this.productComboBox_SelectedIndexChanged);
             // 
             // customerBindingSource1
             // 
@@ -152,6 +157,34 @@
             this.customerComboBox.TabIndex = 9;
             this.customerComboBox.ValueMember = "CompanyName";
             // 
+            // categoryBindingSource
+            // 
+            this.categoryBindingSource.DataSource = typeof(ConsoleApplication1.Category);
+            // 
+            // categoryComboBox
+            // 
+            this.categoryComboBox.DataSource = this.categoryBindingSource;
+            this.categoryComboBox.DisplayMember = "Name";
+            this.categoryComboBox.FormattingEnabled = true;
+            this.categoryComboBox.Location = new System.Drawing.Point(95, 52);
+            this.categoryComboBox.Name = "categoryComboBox";
+            this.categoryComboBox.Size = new System.Drawing.Size(300, 28);
+            this.categoryComboBox.TabIndex = 9;
+            this.categoryComboBox.ValueMember = "CategoryId";
+            this.categoryComboBox.SelectedIndexChanged += new System.EventHandler(this.categoryComboBox_SelectedIndexChanged);
+            this.categoryComboBox.SelectionChangeCommitted += new System.EventHandler(this.categoryComboBox_SelectedChangeCommited);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.label4.Location = new System.Drawing.Point(91, 9);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(129, 20);
+            this.label4.TabIndex = 10;
+            this.label4.Text = "Choose category";
+            this.label4.Click += new System.EventHandler(this.label4_Click);
+            // 
             // frm_Order
             // 
             this.AcceptButton = this.btOK;
@@ -159,6 +192,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btCancel;
             this.ClientSize = new System.Drawing.Size(987, 560);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.categoryComboBox);
             this.Controls.Add(this.customerComboBox);
             this.Controls.Add(this.productComboBox);
             this.Controls.Add(this.label3);
@@ -175,6 +210,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.orderBindingSource)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.productBindingSource1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.customerBindingSource1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.categoryBindingSource)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -193,5 +229,8 @@
         private System.Windows.Forms.ComboBox productComboBox;
         private System.Windows.Forms.BindingSource customerBindingSource1;
         private System.Windows.Forms.ComboBox customerComboBox;
+        private System.Windows.Forms.BindingSource categoryBindingSource;
+        private System.Windows.Forms.ComboBox categoryComboBox;
+        private System.Windows.Forms.Label label4;
     }
 }

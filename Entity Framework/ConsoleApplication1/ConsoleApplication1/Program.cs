@@ -44,6 +44,7 @@ namespace ConsoleApplication1
                 //List<string> c=db.Categories.Where(a => a.Name.Length >0).Select(a => a.Name).ToList();
 
                 //V. method based syntax
+                
                 var categories = db.Categories
                     .Select(c => c.Name).ToList();
 
@@ -68,15 +69,13 @@ namespace ConsoleApplication1
                 Console.WriteLine("Products quantity for each category:");
                 
                 Methods.CountProductsForCategoryQ(db);
-
+                Methods.PrintOrderWithDetails(db);
+                Methods.PrintOrderWithDetailsEL(db);
                 MainForm f = new MainForm();
                 f.ShowDialog();
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey();
             }
         }
-
-      
+        
     }
 
     public class Category
@@ -111,14 +110,22 @@ namespace ConsoleApplication1
         //public virtual Category Category { get; set; }
     }
 
+    //Navigation property w celu uzyskania nazw przechodzimy po łańcuchu asocjacji
     public class Order
     {
         [Key]
         public int OrderId {get; set; }
-        public Customer Customer { get; set; }
-        public Product Product { get; set; }
+        public virtual Customer Customer { get; set; }
+        public virtual Product Product { get; set; }
         public int Quantity { get; set; }
-        public char Status { get; set; }
+        public string Status { get; set; }
+        public DateTime Date { get; set; }
+        public string CustomerName { get {
+                return Customer==null ? "" : Customer.CompanyName;
+            }}
+        public string ProductName { get {
+                return Product == null ? "" : Product.Name;
+            }}
     }
 
     public class ProdContext : DbContext
