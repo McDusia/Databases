@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Buy product</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Witamy w Hurtolandii</h1>
+    <br>
+    <h2>U nas najtaniej!!!</h2>
+<br><br><br><br><br><br>
+<h2>Kup produkt</h2>
+<hr>
+<div style="display:block">
+
+    <form method="post" action="/api/task" enctype="multipart/form-data">
+        <table>
+            <tr>
+                <td><label for="id">id:</label></td>
+                <td><input type="number" id="id" name="id"/></td>
+            </tr>
+
+            <tr>
+                <td><label for="name">Name:</label></td>
+                <td><input type="text" id="name" name="name"/></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: right;">
+                    <input type="submit" value="Save"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <br><br><br>
+    <a href="/list"><button id="list" class="button">zobacz listę produktów</button></a>
+
+    <br><br><br>
+    <a href="/categories"><button id="categories" class="button">zobacz listę kategorii</button></a>
+
+    <br><br><br>
+    <a href="/suppliers"><button id="suppliers" class="button">sprawdź naszych dostawców</button></a>
+
+    <br><br><br>
+    <br><br><br>
+    <a href="buy"><button id="buy" class="button">KUP PRODUKT</button></a>
+
+
+
+</div>
+</body>
+</html>
